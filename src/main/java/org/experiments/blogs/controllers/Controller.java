@@ -1,6 +1,7 @@
 package org.experiments.blogs.controllers;
 
 import org.experiments.blogs.entities.User;
+import org.experiments.blogs.exception.handling.NoSuchUserException;
 import org.experiments.blogs.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
@@ -16,12 +17,19 @@ public class Controller {
     private UserService userService;
 
     @PostMapping("/users")
-    public void saveUser(User user) {
+    public void saveUser(@RequestBody User user) {
         userService.saveOrUpdateUser(user);
     }
 
     @PutMapping("/users")
-    public void updateUser(User user) {
+    public void updateUser(@RequestBody User user) {
+        if(user.getId()==null){
+            throw new RuntimeException("user does not exist");
+        }
+       Optional<User> oldUser=userService.getUser(user.getId());
+       if(!oldUser.isPresent()){
+           throw new RuntimeException("user does not exist");
+       }
         userService.saveOrUpdateUser(user);
     }
 
@@ -29,7 +37,7 @@ public class Controller {
     public User getUser(@PathVariable  Long id) {
        Optional<User> user=userService.getUser(id);
        if(!user.isPresent()){
-           throw  new RuntimeException("Incorrect index");
+           throw  new NoSuchUserException("Incorrect index");
        }
        return user.get();
     }
